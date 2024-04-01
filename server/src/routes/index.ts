@@ -1,34 +1,27 @@
 import { FastifyInstance } from 'fastify';
-import { randomUUID } from 'crypto';
 import { MenuItemsController } from '../controllers/MenuItemsController';
+import { UserController } from '../controllers/UserController';
+import { RestaurantController } from '../controllers/RestaurantController';
 
 const menuItemsController = new MenuItemsController();
-
-const users = new Map();
-const restaurants = new Map();
+const userController = new UserController();
+const restaurantController = new RestaurantController();
 
 export async function routes(fastify: FastifyInstance) {
   fastify.get('/', (request, reply) => {
     return reply.send('Hello Fastify');
   });
 
-  fastify.get('/restaurants', (request, reply) => {
-    const restaurantsArr = Array.from(restaurants);
-    return reply.send(restaurantsArr);
-  });
+  // fastify.get('/restaurants', (request, reply) => {
+  //   const restaurantsArr = Array.from(restaurants);
+  //   return reply.send(restaurantsArr);
+  // });
 
-  fastify.post('/users', (request, reply) => {
-    const { name, email, password, isRestaurant = false, restaurantName, restaurantContact } = request.body;
+  fastify.post('/users', (request, reply) => userController.create(request, reply));
 
-    const id = randomUUID();
-    let restaurantId;
-    if (isRestaurant) {
-      restaurantId = randomUUID();
-      restaurants.set(restaurantId, { name: restaurantName, contact: restaurantContact });
-    }
-    users.set(id, { name, email, password, restaurantId });
-    return reply.status(201).send();
-  });
+  // Restaurants
+  fastify.post('/restaurants', (request, reply) => restaurantController.create(request, reply));
+  fastify.get('/restaurants', (request, reply) => restaurantController.list(request, reply));
 
   fastify.post('/menuItems', (request, reply) => menuItemsController.create(request, reply));
 
