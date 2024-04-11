@@ -18,6 +18,8 @@ export async function routes(fastify: FastifyInstance) {
   // });
 
   fastify.post('/users', (request, reply) => userController.create(request, reply));
+  fastify.get('/users/:id', (request, reply) => userController.show(request, reply));
+  fastify.put('/users/:id', (request, reply) => userController.update(request, reply));
 
   // Restaurants
   fastify.post('/restaurants', (request, reply) => restaurantController.create(request, reply));

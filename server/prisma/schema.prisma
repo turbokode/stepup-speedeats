@@ -14,11 +14,16 @@ datasource db {
 }
 
 model User {
-  id       String  @id @default(uuid())
-  email    String  @unique
-  name     String
-  password String
-  phone    Int?
-  address  String?
-  // roleCode "01" "02"
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  phone     Int?
+  address   String?
+  latitude  Decimal?
+  longitude Decimal?
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("users")
 }
