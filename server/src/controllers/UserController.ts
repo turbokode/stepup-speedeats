@@ -1,6 +1,7 @@
 import { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db';
-import { REPLServer } from 'repl';
+import bcrypt from 'bcrypt';
+import { UserRepository } from '../repositories/userRepository';
 
 interface UserProps {
   id?: string;
@@ -16,29 +17,19 @@ interface UserProps {
 }
 
 export class UserController {
-  users = new Map();
-  restaurants = new Map();
+  #repository = new UserRepository();
+
   async create(request: FastifyRequest, reply: FastifyReply) {
     const { name, email, password } = request.body as UserProps;
 
-    const userExists = await prisma.user.findUnique({
-      where: {
-        email
-      }
-    });
-
+    const userExists = await this.#repository.findByEmail(email);
     if (userExists) {
       return reply.status(400).send({ error: 'Usuario ja existe' });
     }
 
-    await prisma.user.create({
-      data: {
-        name,
-        email,
-        password
-      }
-    });
-    return reply.status(201).send();
+    const user = await this.#repository.save({ name, email, password });
+
+    return reply.status(201).send(user);
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
@@ -57,10 +48,8 @@ export class UserController {
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    interface RequestParamsProps {
-      id: string;
-    }
-    const { id } = request.params as RequestParamsProps;
+    const { userId } = request;
+
     interface RequestBodyProps {
       email?: string;
       name?: string;
@@ -78,24 +67,24 @@ export class UserController {
         }
       });
 
-      if (userExists?.email) {
+      if (userExists) {
         return reply.status(400).send({ error: 'Usuario ja existe' });
       }
     }
 
-    const updatedUser = await prisma.user.update({
-      data: {
-        email,
-        address,
-        latitude,
-        longitude,
-        name,
-        phone
-      },
-      where: {
-        id
-      }
-    });
+    const updatedUser = await this.#repository.update(userId, { email, address, latitude, longitude, name, phone });
     return reply.send(updatedUser);
+  }
+
+  async changePassword(request: FastifyRequest, reply: FastifyReply) {
+    interface RequestBodyProps {
+      password: string;
+    }
+    const { password } = request.body as RequestBodyProps;
+    const { userId } = request;
+
+    await this.#repository.update(userId, { password });
+
+    return reply.status(204).send({});
   }
 }

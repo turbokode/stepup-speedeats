@@ -1,13 +1,18 @@
 import { FastifyInstance } from 'fastify';
 import { MenuItemsController } from '../controllers/MenuItemsController';
-import { UserController } from '../controllers/UserController';
 import { RestaurantController } from '../controllers/RestaurantController';
 
+import { userRoutes } from './users';
+import { authRoutes } from './auth';
+
 const menuItemsController = new MenuItemsController();
-const userController = new UserController();
 const restaurantController = new RestaurantController();
 
 export async function routes(fastify: FastifyInstance) {
+  fastify.decorateRequest('userId', '');
+  fastify.register(userRoutes, { prefix: '/users' });
+  fastify.register(authRoutes, { prefix: '/auth' });
+
   fastify.get('/', (request, reply) => {
     return reply.send('Hello Fastify');
   });
@@ -16,10 +21,6 @@ export async function routes(fastify: FastifyInstance) {
   //   const restaurantsArr = Array.from(restaurants);
   //   return reply.send(restaurantsArr);
   // });
-
-  fastify.post('/users', (request, reply) => userController.create(request, reply));
-  fastify.get('/users/:id', (request, reply) => userController.show(request, reply));
-  fastify.put('/users/:id', (request, reply) => userController.update(request, reply));
 
   // Restaurants
   fastify.post('/restaurants', (request, reply) => restaurantController.create(request, reply));

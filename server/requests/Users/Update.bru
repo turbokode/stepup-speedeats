@@ -1,0 +1,23 @@
+meta {
+  name: Update
+  type: http
+  seq: 2
+}
+
+put {
+  url: {{url}}/users
+  body: json
+  auth: bearer
+}
+
+auth:bearer {
+  token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpZCI6ImQ1MjE3YWRiLWIwZmItNDc5ZS05MjNjLTNkNTBjMDVmN2ZjOSIsImlhdCI6MTcxMzczNDM1OSwiZXhwIjoxNzEzOTkzNTU5fQ.p6rdQEzir5dJms56SYx0uomuUN5oOWPGQIeszLy00OQ
+}
+
+body:json {
+  {
+    "name": "Luis 222",
+    "phone": 846382637
+  }
+  
+}

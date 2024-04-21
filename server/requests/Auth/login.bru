@@ -1,0 +1,18 @@
+meta {
+  name: login
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{url}}/auth
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "email": "luis5@turbokode.co.mz",
+    "password": "1234567"
+  }
+}

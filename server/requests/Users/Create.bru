@@ -1,11 +1,11 @@
 meta {
-  name: Create users
+  name: Create
   type: http
   seq: 1
 }
 
 post {
-  url: http://localhost:3333/users
+  url: {{url}}/users
   body: json
   auth: none
 }
@@ -13,7 +13,7 @@ post {
 body:json {
   {
     "name": "Luis",
-    "email": "luis@turbokode.co.mz",
+    "email": "luis5@turbokode.co.mz",
     "password": "123456"
   }
   
