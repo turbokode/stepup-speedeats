@@ -25,8 +25,6 @@ export class UserRepository {
       }
     });
 
-    delete savedUser.password;
-
     return { ...savedUser, password: undefined };
   }
 

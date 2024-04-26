@@ -87,4 +87,8 @@ export class UserController {
 
     return reply.status(204).send({});
   }
+
+  async updateAvatar(request: FastifyRequest, reply: FastifyReply) {
+    return reply.send({ message: 'Updating avatar' });
+  }
 }
