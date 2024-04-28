@@ -1,4 +1,5 @@
 import { FastifyInstance } from 'fastify';
+import fastifyMultipart from '@fastify/multipart';
 import { MenuItemsController } from '../controllers/MenuItemsController';
 import { RestaurantController } from '../controllers/RestaurantController';
 
@@ -10,6 +11,7 @@ const restaurantController = new RestaurantController();
 
 export async function routes(fastify: FastifyInstance) {
   fastify.decorateRequest('userId', '');
+  fastify.register(fastifyMultipart, { attachFieldsToBody: true });
   fastify.register(userRoutes, { prefix: '/users' });
   fastify.register(authRoutes, { prefix: '/auth' });
 

@@ -22,8 +22,25 @@ model User {
   address   String?
   latitude  Decimal?
   longitude Decimal?
+
+  avatarId String? @map("avatar_id")
+
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
+  avatar File? @relation(fields: [avatarId], references: [id])
+
   @@map("users")
+}
+
+model File {
+  id           String @id @default(uuid())
+  filename     String @unique
+  originalname String
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+  User      User[]
+
+  @@map("files")
 }

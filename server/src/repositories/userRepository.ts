@@ -9,6 +9,7 @@ interface UpdateUserProps {
   address?: string;
   latitude?: number;
   longitude?: number;
+  avatarId?: string;
 }
 
 export class UserRepository {
@@ -48,7 +49,12 @@ export class UserRepository {
 
   async update(id: string, user: UpdateUserProps) {
     const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : undefined;
-    const updatedUser = await this.#client.update({ data: { ...user, password: passwordHash }, where: { id } });
+    const updatedUser = await this.#client.update({
+      data: { ...user, password: passwordHash },
+      where: { id },
+      include: { avatar: true }
+    });
+
     return { ...updatedUser, password: undefined };
   }
 }

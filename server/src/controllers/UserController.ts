@@ -2,6 +2,7 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 import { prisma } from '../db';
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/userRepository';
+import { FileRepository } from '../repositories/fileRepository';
 
 interface UserProps {
   id?: string;
@@ -18,6 +19,7 @@ interface UserProps {
 
 export class UserController {
   #repository = new UserRepository();
+  #fileRepository = new FileRepository();
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const { name, email, password } = request.body as UserProps;
@@ -89,6 +91,19 @@ export class UserController {
   }
 
   async updateAvatar(request: FastifyRequest, reply: FastifyReply) {
-    return reply.send({ message: 'Updating avatar' });
+    interface RequestBodyProps {
+      avatar: {
+        filename: string;
+        originalname: string;
+      };
+    }
+
+    const { avatar } = request.body as RequestBodyProps;
+    const { userId } = request;
+
+    const savedFile = await this.#fileRepository.save({ filename: avatar.filename, originalname: avatar.originalname });
+    const user = await this.#repository.update(userId, { avatarId: savedFile.id });
+
+    return reply.send(user);
   }
 }
