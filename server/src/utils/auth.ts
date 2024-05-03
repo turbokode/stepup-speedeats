@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { APP_SECRET } from './env';
 
 interface UserProps {
   id: string;
@@ -8,6 +9,6 @@ interface UserProps {
 }
 
 export function generateToken({ id }: UserProps) {
-  const token = jwt.sign({ id }, 'secret', { expiresIn: '3d' });
+  const token = jwt.sign({ id }, APP_SECRET, { expiresIn: '3d' });
   return token;
 }

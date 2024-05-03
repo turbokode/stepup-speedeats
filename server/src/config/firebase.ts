@@ -1,8 +1,17 @@
+import {
+  FIREBASE_API_KEY,
+  FIREBASE_APP_ID,
+  FIREBASE_AUTH_DOMAIN,
+  FIREBASE_MESSAGING_SENDER_ID,
+  FIREBASE_PROJECT_ID,
+  FIREBASE_STORAGE_BUCKET
+} from '../utils/env';
+
 export const firebaseConfig = {
-  apiKey: 'AIzaSyCcXRmPswgx7sMK1X1EXR5Ha96LU_121l8',
-  authDomain: 'speedeats-test-auth.firebaseapp.com',
-  projectId: 'speedeats-test-auth',
-  storageBucket: 'speedeats-test-auth.appspot.com',
-  messagingSenderId: '122143854434',
-  appId: '1:122143854434:web:ff1a765d8a5381c5d9a63b'
+  apiKey: FIREBASE_API_KEY,
+  authDomain: FIREBASE_AUTH_DOMAIN,
+  projectId: FIREBASE_PROJECT_ID,
+  storageBucket: FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: FIREBASE_MESSAGING_SENDER_ID,
+  appId: FIREBASE_APP_ID
 };

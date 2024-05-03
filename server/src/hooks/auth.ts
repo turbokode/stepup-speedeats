@@ -1,5 +1,6 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
+import { APP_SECRET } from '../utils/env';
 
 interface PayloadProps {
   id: string;
@@ -10,7 +11,7 @@ export function authHook(request: FastifyRequest, reply: FastifyReply, done: (er
 
   const [, token] = request.headers.authorization.split(' ');
   try {
-    const { id } = jwt.verify(token, 'secret') as PayloadProps;
+    const { id } = jwt.verify(token, APP_SECRET) as PayloadProps;
     request.userId = id;
   } catch (err) {
     return reply.status(401).send({ error: 'Invalid token' });

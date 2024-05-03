@@ -3,9 +3,12 @@ import bcrypt from 'bcrypt';
 import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
 import { UserRepository } from '../repositories/userRepository';
 import { generateToken } from '../utils/auth';
+import { FileRepository } from '../repositories/fileRepository';
+import { EStorageTypes } from '../config/storageTypes';
 
 export default class AuthController {
   #userRepository = new UserRepository();
+  #fileRepository = new FileRepository();
   async login(request: FastifyRequest, reply: FastifyReply) {
     interface RequestBodyProps {
       email: string;
@@ -51,9 +54,14 @@ export default class AuthController {
       const sign = await signInWithCredential(auth, credential);
       const { email, displayName: name, photoURL } = sign.user as UserProps;
       let user = await this.#userRepository.findByEmail(email);
-
       if (!user) {
-        user = await this.#userRepository.save({ email, name });
+        const photoId = photoURL.split('/').pop();
+        const avatar = await this.#fileRepository.save({
+          filename: photoId,
+          originalname: name,
+          storageType: EStorageTypes.GOOGLE
+        });
+        user = await this.#userRepository.save({ email, name, avatarId: avatar.id });
       }
 
       const token = generateToken(user);
@@ -61,6 +69,7 @@ export default class AuthController {
         id: user.id,
         name: user.name,
         email: user.email,
+        avatar: user.avatar,
         token
       });
     } catch (error) {

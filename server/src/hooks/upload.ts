@@ -2,13 +2,14 @@ import { randomUUID } from 'crypto';
 import fs from 'fs';
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import path from 'path';
+import { UPLOADS_DIR } from '../utils/constants';
 
 export function upload(field: string) {
   return (request: FastifyRequest, reply: FastifyReply, done: (err?: FastifyError) => void) => {
     const file = request.body[field];
 
     const fileName = `${randomUUID()}-${file.filename}`.replace(/ /g, '_');
-    const filePath = path.resolve(__dirname, '..', '..', 'uploads', fileName);
+    const filePath = path.join(UPLOADS_DIR, fileName);
 
     fs.promises
       .writeFile(filePath, file._buf)
@@ -28,9 +29,5 @@ export function upload(field: string) {
       .catch((error) => {
         return reply.status(400).send(error);
       });
-    // const savedFile = await filesRepository.save({
-    //   filename: fileName,
-    //   originalName: file.filename
-    // });
   };
 }
