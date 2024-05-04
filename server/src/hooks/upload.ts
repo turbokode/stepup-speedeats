@@ -7,6 +7,7 @@ import { UPLOADS_DIR } from '../utils/constants';
 export function upload(field: string) {
   return (request: FastifyRequest, reply: FastifyReply, done: (err?: FastifyError) => void) => {
     const file = request.body[field];
+    console.log(UPLOADS_DIR);
 
     const fileName = `${randomUUID()}-${file.filename}`.replace(/ /g, '_');
     const filePath = path.join(UPLOADS_DIR, fileName);

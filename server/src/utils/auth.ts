@@ -3,9 +3,6 @@ import { APP_SECRET } from './env';
 
 interface UserProps {
   id: string;
-  name: string;
-  email: string;
-  password: string | null;
 }
 
 export function generateToken({ id }: UserProps) {

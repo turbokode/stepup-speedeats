@@ -3,26 +3,19 @@ import { prisma } from '../db';
 import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/userRepository';
 import { FileRepository } from '../repositories/fileRepository';
-
-interface UserProps {
-  id?: string;
-  email: string;
-  name: string;
-  password: string;
-  phone?: number;
-  address?: string;
-  latitude?: number;
-  longitude?: number;
-  createdAt?: Date;
-  updatedAt?: Date;
-}
+import { string, z } from 'zod';
 
 export class UserController {
   #repository = new UserRepository();
   #fileRepository = new FileRepository();
 
   async create(request: FastifyRequest, reply: FastifyReply) {
-    const { name, email, password } = request.body as UserProps;
+    const BodySchema = z.object({
+      name: z.string(),
+      email: z.string().email(),
+      password: z.string().min(8)
+    });
+    const { name, email, password } = BodySchema.parse(request.body);
 
     const userExists = await this.#repository.findByEmail(email);
     if (userExists) {
@@ -35,10 +28,10 @@ export class UserController {
   }
 
   async show(request: FastifyRequest, reply: FastifyReply) {
-    interface RequestParamsProps {
-      id: string;
-    }
-    const { id } = request.params as RequestParamsProps;
+    const ParamsSchema = z.object({
+      id: z.string()
+    });
+    const { id } = ParamsSchema.parse(request.params);
 
     const user = await prisma.user.findFirst({ where: { id } });
 
@@ -60,7 +53,15 @@ export class UserController {
       latitude?: number;
       longitude?: number;
     }
-    const { email, address, latitude, longitude, name, phone } = request.body as RequestBodyProps;
+    const BodySchema = z.object({
+      email: z.string().email().optional(),
+      address: z.string().optional(),
+      latitude: z.number().optional(),
+      longitude: z.number().optional(),
+      name: z.string().optional(),
+      phone: z.number().optional()
+    });
+    const { email, address, latitude, longitude, name, phone } = BodySchema.parse(request.body);
 
     if (email) {
       const userExists = await prisma.user.findFirst({
@@ -79,10 +80,10 @@ export class UserController {
   }
 
   async changePassword(request: FastifyRequest, reply: FastifyReply) {
-    interface RequestBodyProps {
-      password: string;
-    }
-    const { password } = request.body as RequestBodyProps;
+    const BodySchema = z.object({
+      password: z.string().min(8)
+    });
+    const { password } = BodySchema.parse(request.body);
     const { userId } = request;
 
     await this.#repository.update(userId, { password });
@@ -91,14 +92,15 @@ export class UserController {
   }
 
   async updateAvatar(request: FastifyRequest, reply: FastifyReply) {
-    interface RequestBodyProps {
-      avatar: {
-        filename: string;
-        originalname: string;
-      };
-    }
 
-    const { avatar } = request.body as RequestBodyProps;
+    const BodySchema = z.object({
+      avatar: z.object({
+        filename: z.string(),
+        originalname: z.string()
+      })
+    });
+
+    const { avatar } = BodySchema.parse(request.body);
     const { userId } = request;
 
     const savedFile = await this.#fileRepository.save({ filename: avatar.filename, originalname: avatar.originalname });
