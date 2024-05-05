@@ -8,7 +8,6 @@ const userController = new UserController();
 export async function userRoutes(fastify: FastifyInstance) {
   fastify.register(authRoutes);
   fastify.post('/', (request, reply) => userController.create(request, reply));
-  // fastify.get('/:id', (request, reply) => userController.show(request, reply));
 }
 
 async function authRoutes(fastify: FastifyInstance) {

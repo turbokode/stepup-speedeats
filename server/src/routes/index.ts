@@ -25,11 +25,6 @@ export async function routes(fastify: FastifyInstance) {
     return reply.send('Hello Fastify');
   });
 
-  // fastify.get('/restaurants', (request, reply) => {
-  //   const restaurantsArr = Array.from(restaurants);
-  //   return reply.send(restaurantsArr);
-  // });
-
   // Restaurants
   fastify.post('/restaurants', (request, reply) => restaurantController.create(request, reply));
   fastify.get('/restaurants', (request, reply) => restaurantController.list(request, reply));

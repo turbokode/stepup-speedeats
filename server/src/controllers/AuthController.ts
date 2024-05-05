@@ -6,6 +6,7 @@ import { generateToken } from '../utils/auth';
 import { EStorageTypes } from '../config/storageTypes';
 import { UserRepository } from '../repositories/userRepository';
 import { FileRepository } from '../repositories/fileRepository';
+import { AppError } from '../errors/AppError';
 
 export default class AuthController {
   #userRepository = new UserRepository();
@@ -20,17 +21,11 @@ export default class AuthController {
 
     const user = await this.#userRepository.findByEmail(email);
 
-    if (!user) {
-      return reply.status(404).send({ error: 'Usuario nao existe' });
-    }
+    if (!user) throw new AppError('Usuario nao existe', 404);
 
-    if (!user.password) {
-      return reply.status(401).send({ error: 'Autenticacao falhou' });
-    }
+    if (!user.password) throw new AppError('Autenticacao falhou', 401);
 
-    if (!(await bcrypt.compare(password, user.password))) {
-      return reply.status(401).send({ error: 'Autenticacao falhou' });
-    }
+    if (!(await bcrypt.compare(password, user.password))) throw new AppError('Autenticacao falhou', 401);
 
     const token = generateToken(user);
 
@@ -56,7 +51,7 @@ export default class AuthController {
 
     try {
       const sign = await signInWithCredential(auth, credential);
-      if (!sign) return reply.status(401).send({ error: 'Invalid credential' });
+      if (!sign) throw new AppError('Credencial invalida', 401);
 
       const { email, displayName: name, photoURL } = sign.user as UserProps;
 
@@ -83,7 +78,7 @@ export default class AuthController {
         token
       });
     } catch (error) {
-      return reply.send(error);
+      throw new AppError('Autenticacao falhou', 401);
     }
   }
 }

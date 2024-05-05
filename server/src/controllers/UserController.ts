@@ -4,6 +4,7 @@ import bcrypt from 'bcrypt';
 import { UserRepository } from '../repositories/userRepository';
 import { FileRepository } from '../repositories/fileRepository';
 import { string, z } from 'zod';
+import { AppError } from '../errors/AppError';
 
 export class UserController {
   #repository = new UserRepository();
@@ -18,9 +19,7 @@ export class UserController {
     const { name, email, password } = BodySchema.parse(request.body);
 
     const userExists = await this.#repository.findByEmail(email);
-    if (userExists) {
-      return reply.status(400).send({ error: 'Usuario ja existe' });
-    }
+    if (userExists) throw new AppError('Usuario ja existe');
 
     const user = await this.#repository.save({ name, email, password });
 
@@ -35,24 +34,13 @@ export class UserController {
 
     const user = await prisma.user.findFirst({ where: { id } });
 
-    if (!user) {
-      return reply.status(404).send({ error: 'Usuario nao encontrado' });
-    }
+    if (!user) throw new AppError('Usuario nao encontrado', 404);
 
     return reply.send(user);
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
     const { userId } = request;
-
-    interface RequestBodyProps {
-      email?: string;
-      name?: string;
-      phone?: number;
-      address?: string;
-      latitude?: number;
-      longitude?: number;
-    }
     const BodySchema = z.object({
       email: z.string().email().optional(),
       address: z.string().optional(),
@@ -70,9 +58,7 @@ export class UserController {
         }
       });
 
-      if (userExists) {
-        return reply.status(400).send({ error: 'Usuario ja existe' });
-      }
+      if (userExists) throw new AppError('Usuario ja existe');
     }
 
     const updatedUser = await this.#repository.update(userId, { email, address, latitude, longitude, name, phone });
@@ -92,7 +78,6 @@ export class UserController {
   }
 
   async updateAvatar(request: FastifyRequest, reply: FastifyReply) {
-
     const BodySchema = z.object({
       avatar: z.object({
         filename: z.string(),
