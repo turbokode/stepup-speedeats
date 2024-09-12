@@ -1,20 +1,24 @@
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import jwt from 'jsonwebtoken';
 import { APP_SECRET } from '../utils/env';
+import { AppError } from '../errors/AppError';
+import { z } from 'zod';
 
-interface PayloadProps {
-  id: string;
-}
-
-export function authHook(request: FastifyRequest, reply: FastifyReply, done: (err?: FastifyError) => void) {
-  if (!request.headers.authorization) return reply.status(401).send({ error: 'User is not logged in' });
-
+export function authHook(request: FastifyRequest, reply: FastifyReply, done: (error?: FastifyError) => void) {
+  if (!request.headers.authorization) {
+    throw new AppError('Authorization token not found', 401);
+  }
   const [, token] = request.headers.authorization.split(' ');
   try {
-    const { id } = jwt.verify(token, APP_SECRET) as PayloadProps;
+    const PayloadSchema = z.object({
+      id: z.string(),
+      restaurantId: z.string().optional()
+    });
+    const { id, restaurantId = '' } = PayloadSchema.parse(jwt.verify(token, APP_SECRET));
     request.userId = id;
-  } catch (err) {
-    return reply.status(401).send({ error: 'Invalid token' });
+    request.restaurantId = restaurantId;
+    done();
+  } catch (error) {
+    throw new AppError('Invalid Token', 401);
   }
-  done();
 }

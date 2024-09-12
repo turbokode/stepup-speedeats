@@ -18,19 +18,23 @@ model User {
   email     String   @unique
   name      String
   password  String?
-  phone     Int?
+  phone     String?
   address   String?
   latitude  Decimal?
   longitude Decimal?
-
-  avatarId String? @map("avatar_id")
-
+  avatarId  String?  @map("avatar_id")
   createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  updateAt  DateTime @updatedAt @map("updated_at")
 
-  avatar File? @relation(fields: [avatarId], references: [id])
+  avatar     File?        @relation(fields: [avatarId], references: [id])
+  restaurant Restaurant[]
 
   @@map("users")
+}
+
+enum StorageType {
+  LOCAL
+  GOOGLE
 }
 
 model File {
@@ -39,14 +43,76 @@ model File {
   originalname String
   storageType  StorageType @default(LOCAL) @map("storage_type")
 
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  User      User[]
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updateAt    DateTime     @updatedAt @map("updated_at")
+  users       User[]
+  restaurants Restaurant[]
+  MenuItem    MenuItem[]
 
   @@map("files")
 }
 
-enum StorageType {
-  LOCAL
-  GOOGLE
+model Restaurant {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  address     String?
+  latitude    Decimal @db.Decimal(9, 6)
+  longitude   Decimal @db.Decimal(9, 6)
+  openTime    String  @map("open_time")
+  closeTime   String  @map("close_time")
+  slogan      String
+  phone       String
+  email       String  @unique
+  createdBy   String  @map("created_by")
+  imageId     String? @map("image_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updateAt  DateTime @updatedAt @map("updated_at")
+
+  creator   User       @relation(fields: [createdBy], references: [id])
+  image     File?      @relation(fields: [imageId], references: [id])
+  menuItems MenuItem[]
+
+  @@map("restaurants")
+}
+
+model MenuItem {
+  id           String  @id @default(uuid())
+  name         String
+  description  String?
+  price        Float
+  prepareTime  String  @map("prepare_time")
+  imageId      String? @map("image_id")
+  restaurantId String  @map("restaurant_id")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updateAt  DateTime @updatedAt @map("updated_at")
+
+  restaurant  Restaurant           @relation(fields: [restaurantId], references: [id])
+  image       File?                @relation(fields: [imageId], references: [id])
+  ingredients MenuItemIngredient[]
+
+  @@map("menu_items")
+}
+
+model Ingredient {
+  id   String @id @default(uuid())
+  name String @unique
+
+  createdAt DateTime             @default(now()) @map("created_at")
+  updateAt  DateTime             @updatedAt @map("updated_at")
+  menuItems MenuItemIngredient[]
+
+  @@map("ingredients")
+}
+
+model MenuItemIngredient {
+  ingredientId String     @map("ingredient_id")
+  ingredient   Ingredient @relation(fields: [ingredientId], references: [id])
+  menuItemId   String     @map("menu_item_id")
+  menuItem     MenuItem   @relation(fields: [menuItemId], references: [id])
+
+  @@id([ingredientId, menuItemId])
+  @@map("menu_items_ingredients")
 }

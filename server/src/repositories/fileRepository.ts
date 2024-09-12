@@ -1,17 +1,17 @@
-import { EStorageTypes } from '../config/storageTypes';
-import { prisma } from '../db';
+import { prisma } from '../bd';
+import { EStorageType } from '../config/storageTypes';
 
 interface SaveFileProps {
   filename: string;
   originalname: string;
-  storageType?: EStorageTypes;
+  storageType?: EStorageType;
 }
 
 export class FileRepository {
   #client = prisma.file;
 
-  async save({ filename, originalname, storageType }: SaveFileProps) {
-    const savedFile = await this.#client.create({
+  save({ filename, originalname, storageType }: SaveFileProps) {
+    const savedFile = this.#client.create({
       data: {
         filename,
         originalname,

@@ -1,35 +1,39 @@
-import path from 'path';
 import { FastifyInstance } from 'fastify';
 import fastifyMultipart from '@fastify/multipart';
 import fastifyStatic from '@fastify/static';
-import { MenuItemsController } from '../controllers/MenuItemsController';
-import { RestaurantController } from '../controllers/RestaurantController';
-import { userRoutes } from './users';
-import { authRoutes } from './auth';
+import { userRoutes } from './user';
 import { UPLOADS_DIR } from '../utils/constants';
-
-const menuItemsController = new MenuItemsController();
-const restaurantController = new RestaurantController();
+import { authRoutes } from './auth';
+import { restaurantRoutes } from './restaurants';
+import { menuItemRoutes } from './menuItems';
+import { ingredientRoutes } from './ingredients';
 
 export async function routes(fastify: FastifyInstance) {
-  fastify.decorateRequest('userId', '');
   fastify.register(fastifyMultipart, { attachFieldsToBody: true });
   fastify.register(fastifyStatic, {
     root: UPLOADS_DIR,
-    prefix: '/public/'
+    prefix: '/public'
   });
-  fastify.register(userRoutes, { prefix: '/users' });
-  fastify.register(authRoutes, { prefix: '/auth' });
 
-  fastify.get('/', async (request, reply) => {
+  fastify.decorateRequest('userId', '');
+  fastify.decorateRequest('restaurantId', '');
+  fastify.get('/', (request, reply) => {
     return reply.send('Hello Fastify');
   });
 
-  // Restaurants
-  fastify.post('/restaurants', (request, reply) => restaurantController.create(request, reply));
-  fastify.get('/restaurants', (request, reply) => restaurantController.list(request, reply));
-
-  fastify.post('/menuItems', (request, reply) => menuItemsController.create(request, reply));
-
-  fastify.get('/menuItems', (request, reply) => menuItemsController.list(request, reply));
+  fastify.register(userRoutes, {
+    prefix: '/users'
+  });
+  fastify.register(authRoutes, {
+    prefix: '/auth'
+  });
+  fastify.register(restaurantRoutes, {
+    prefix: '/restaurants'
+  });
+  fastify.register(menuItemRoutes, {
+    prefix: '/menu-items'
+  });
+  fastify.register(ingredientRoutes, {
+    prefix: '/ingredients'
+  });
 }

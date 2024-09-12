@@ -1,15 +1,14 @@
 import 'dotenv/config';
+import { z } from 'zod';
 
-export const BASE_URL = process.env.BASE_URL || 'http://localhost:3333';
-export const APP_ENV = process.env.APP_ENV || 'dev';
-export const APP_SECRET = process.env.APP_SECRET as string;
+export const APP_ENV = z.string().parse(process.env.APP_ENV || 'dev');
+export const BASE_URL = z.string().parse(process.env.BASE_URL || 'http://localhost');
+export const PORT = z.coerce.number().parse(process.env.PORT || 3333);
+export const APP_SECRET = z.string().parse(process.env.APP_SECRET);
 
-export const DATABASE_URL = process.env.DATABASE_URL;
-
-// FIREBASE
-export const FIREBASE_API_KEY = process.env.FIREBASE_API_KEY as string;
-export const FIREBASE_AUTH_DOMAIN = process.env.FIREBASE_AUTH_DOMAIN as string;
-export const FIREBASE_PROJECT_ID = process.env.FIREBASE_PROJECT_ID as string;
-export const FIREBASE_STORAGE_BUCKET = process.env.FIREBASE_STORAGE_BUCKET as string;
-export const FIREBASE_MESSAGING_SENDER_ID = process.env.FIREBASE_MESSAGING_SENDER_ID as string;
-export const FIREBASE_APP_ID = process.env.FIREBASE_APP_ID as string;
+export const API_KEY = z.string().parse(process.env.API_KEY);
+export const AUTH_DOMAIN = z.string().parse(process.env.AUTH_DOMAIN);
+export const PROJECT_ID = z.string().parse(process.env.PROJECT_ID);
+export const STORAGE_BUCKET = z.string().parse(process.env.STORAGE_BUCKET);
+export const MESSAGING_SENDER_ID = z.string().parse(process.env.MESSAGING_SENDER_ID);
+export const APP_ID = z.string().parse(process.env.APP_ID);

@@ -1,41 +1,54 @@
 import { randomUUID } from 'crypto';
-import fs from 'fs';
 import { FastifyError, FastifyReply, FastifyRequest } from 'fastify';
 import path from 'path';
+import fs from 'fs';
 import { UPLOADS_DIR } from '../utils/constants';
-import { z } from 'zod';
-interface Body {
-  [field: string]: object;
+import { AppError } from '../errors/AppError';
+
+interface FileProps {
+  [key: string]: {
+    filename: string;
+    _buf: string;
+    value: unknown | string;
+  };
 }
 
-export function upload(field: string) {
-  return (request: FastifyRequest, reply: FastifyReply, done: (err?: FastifyError) => void) => {
-    const SCh = z.object({
-      '*': z.object({})
-    });
-    const b = SCh.parse(request.body)
-    const file = request.body[field];
-
-    const fileName = `${randomUUID()}-${file.filename}`.replace(/ /g, '_');
-    const filePath = path.join(UPLOADS_DIR, fileName);
-
-    fs.promises
-      .writeFile(filePath, file._buf)
-      .then((res) => {
-        const savedFile = {
-          filename: fileName,
-          originalname: file.filename
-        };
-
-        const body = Object.fromEntries(Object.keys(request.body).map((key) => [key, request.body[key].value]));
-
-        body[field] = savedFile;
-        request.body = body;
-
-        done();
+export function uploadHook(field: string) {
+  return (request: FastifyRequest, reply: FastifyReply, done: (error?: FastifyError) => void) => {
+    const requestBody = request.body as FileProps;
+    const file = requestBody[field];
+    const body = Object.fromEntries(
+      Object.keys(requestBody).map((key) => {
+        let parsedKey = key;
+        let value = requestBody[key].value;
+        if (key.endsWith('[]')) {
+          parsedKey = key.split('[]')[0];
+          value = String(value) === '' ? [] : String(value).split(',');
+        }
+        return [parsedKey, value];
       })
-      .catch((error) => {
-        return reply.status(400).send(error);
-      });
+    );
+
+    if (file) {
+      const fileName = `${randomUUID()}-${file.filename}`.replace(/ /g, '_');
+      const filePath = path.join(UPLOADS_DIR, fileName);
+
+      fs.promises
+        .writeFile(filePath, file._buf)
+        .then(() => {
+          body[field] = {
+            filename: fileName,
+            originalname: file.filename
+          };
+          request.body = body;
+          done();
+        })
+        .catch((error) => {
+          throw new AppError('Erro no upload');
+        });
+    } else {
+      request.body = body;
+      done();
+    }
   };
 }

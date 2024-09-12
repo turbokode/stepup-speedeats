@@ -1,63 +1,70 @@
-import { prisma } from '../db';
+import { prisma } from '../bd';
 import bcrypt from 'bcrypt';
 
-interface UpdateUserProps {
-  email?: string;
-  name?: string;
+interface saveUserProps {
+  name: string;
+  email: string;
   password?: string;
-  phone?: number;
+  avatarId?: string;
+}
+interface UpdateUserProps {
+  name?: string;
+  email?: string;
+  phone?: string;
   address?: string;
-  latitude?: number;
-  longitude?: number;
+  latitude?: string;
+  longitude?: string;
+  password?: string;
   avatarId?: string;
 }
 
 export class UserRepository {
-  #client = prisma.user;
+  client = prisma.user;
 
-  async save(user: { name: string; email: string; password?: string; avatarId?: string }) {
+  async save(user: saveUserProps) {
     const { name, email, password, avatarId } = user;
     const passwordHash = password ? await bcrypt.hash(password, 10) : null;
-    const savedUser = await this.#client.create({
+    const savedUser = await this.client.create({
       data: {
         name,
         email,
         password: passwordHash,
-        avatarId: avatarId
-      },
-      include: { avatar: true }
+        avatarId
+      }
     });
-
-    return { ...savedUser, password: undefined };
+    // Storing user data in the Map
+    return savedUser;
   }
 
   async findByEmail(email: string) {
-    const user = await this.#client.findFirst({
+    const user = await this.client.findUnique({
       where: {
         email
       },
-      include: { avatar: true }
-    });
-    return user;
-  }
-
-  async findById(id: string) {
-    const user = await this.#client.findFirst({
-      where: {
-        id
+      include: {
+        restaurant: true
       }
     });
     return user;
   }
 
-  async update(id: string, user: UpdateUserProps) {
-    const passwordHash = user.password ? await bcrypt.hash(user.password, 10) : undefined;
-    const updatedUser = await this.#client.update({
-      data: { ...user, password: passwordHash },
-      where: { id },
-      include: { avatar: true }
+  async update(id: string, { email, address, latitude, longitude, name, phone, password, avatarId }: UpdateUserProps) {
+    const passwordHash = password ? await bcrypt.hash(password, 10) : undefined;
+    const updateUser = await this.client.update({
+      data: {
+        email,
+        address,
+        latitude,
+        longitude,
+        name,
+        phone,
+        avatarId,
+        password: passwordHash
+      },
+      where: {
+        id
+      }
     });
-
-    return { ...updatedUser, password: undefined };
+    return { ...updateUser, password: undefined };
   }
 }

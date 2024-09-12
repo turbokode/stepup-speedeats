@@ -1,16 +1,21 @@
-import { z } from 'zod';
-import bcrypt from 'bcrypt';
 import { FastifyReply, FastifyRequest } from 'fastify';
+import bcrypt from 'bcrypt';
 import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import { generateToken } from '../utils/auth';
-import { EStorageTypes } from '../config/storageTypes';
 import { UserRepository } from '../repositories/userRepository';
+import { generateToken } from '../services/authService';
 import { FileRepository } from '../repositories/fileRepository';
+import { EStorageType } from '../config/storageTypes';
+import { z } from 'zod';
 import { AppError } from '../errors/AppError';
 
-export default class AuthController {
-  #userRepository = new UserRepository();
-  #fileRepository = new FileRepository();
+interface SignUserProps {
+  displayName: string;
+  email: string;
+  photoURL: string;
+}
+export class AuthController {
+  userRepository = new UserRepository();
+  fileRepository = new FileRepository();
 
   async login(request: FastifyRequest, reply: FastifyReply) {
     const BodySchema = z.object({
@@ -18,67 +23,47 @@ export default class AuthController {
       password: z.string()
     });
     const { email, password } = BodySchema.parse(request.body);
-
-    const user = await this.#userRepository.findByEmail(email);
-
-    if (!user) throw new AppError('Usuario nao existe', 404);
-
-    if (!user.password) throw new AppError('Autenticacao falhou', 401);
-
-    if (!(await bcrypt.compare(password, user.password))) throw new AppError('Autenticacao falhou', 401);
+    const user = await this.userRepository.findByEmail(email);
+    if (!user) {
+      throw new AppError('Usuário nao encontrado', 404);
+    }
+    if (!user.password) throw new AppError('A autenticacao falhou', 401);
+    if (!(await bcrypt.compare(password, user.password))) {
+      throw new AppError('A autenticacao falhou', 401);
+    }
 
     const token = generateToken(user);
-
-    return reply.send({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      token
-    });
+    return reply.send({ ...user, password: undefined, token });
   }
 
-  async googleAuth(request: FastifyRequest, reply: FastifyReply) {
-    interface UserProps {
-      email: string;
-      displayName: string;
-      photoURL: string;
-    }
-    const AuthSchema = z.string();
-    const [, idToken] = AuthSchema.parse(request.headers.authorization?.split(' '));
+  async loginGoogle(request: FastifyRequest, reply: FastifyReply) {
+    const [, id_token] = z.string().parse(request.headers.authorization?.split(' '));
 
-    const credential = GoogleAuthProvider.credential(idToken);
+    const credential = GoogleAuthProvider.credential(id_token);
+
     const auth = getAuth();
-
     try {
       const sign = await signInWithCredential(auth, credential);
-      if (!sign) throw new AppError('Credencial invalida', 401);
+      const { email, displayName: name, photoURL } = sign.user as SignUserProps;
 
-      const { email, displayName: name, photoURL } = sign.user as UserProps;
+      let user = await this.userRepository.findByEmail(email);
 
-      let user = await this.#userRepository.findByEmail(email);
       if (!user) {
         const photoId = photoURL.split('/').pop() as string;
-        const avatar = await this.#fileRepository.save({
+        const avatar = await this.fileRepository.save({
           filename: photoId,
           originalname: name,
-          storageType: EStorageTypes.GOOGLE
+          storageType: EStorageType.GOOGLE
         });
-        const savedUser = await this.#userRepository.save({ email, name, avatarId: avatar.id });
-        const token = generateToken(savedUser);
-        return reply.send({
-          ...savedUser,
-          token
-        });
+        const user = await this.userRepository.save({ name, email, avatarId: avatar.id });
+        const token = generateToken({ ...user, restaurant: undefined });
+        return reply.send({ ...user, password: undefined, token });
+      } else {
+        const token = generateToken(user);
+        return reply.send({ ...user, password: undefined, token });
       }
-
-      const token = generateToken(user);
-      return reply.send({
-        ...user,
-        password: undefined,
-        token
-      });
     } catch (error) {
-      throw new AppError('Autenticacao falhou', 401);
+      throw new AppError('A autenticacao falhou', 401);
     }
   }
 }
