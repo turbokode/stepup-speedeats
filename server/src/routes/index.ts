@@ -7,6 +7,7 @@ import { authRoutes } from './auth';
 import { restaurantRoutes } from './restaurants';
 import { menuItemRoutes } from './menuItems';
 import { ingredientRoutes } from './ingredients';
+import { orderRoutes } from './orders';
 
 export async function routes(fastify: FastifyInstance) {
   fastify.register(fastifyMultipart, { attachFieldsToBody: true });
@@ -35,5 +36,9 @@ export async function routes(fastify: FastifyInstance) {
   });
   fastify.register(ingredientRoutes, {
     prefix: '/ingredients'
+  });
+
+  fastify.register(orderRoutes, {
+    prefix: '/orders'
   });
 }
