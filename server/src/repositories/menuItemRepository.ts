@@ -88,4 +88,20 @@ export class MenuItemRepository {
     });
     return menuItem;
   }
+
+  async getByItemsList(items: string[]) {
+    const itemsList = await this.#client.findMany({
+      where: {
+        OR: items.map((item) => ({
+          id: item
+        }))
+      },
+      select: {
+        id: true,
+        price: true,
+        restaurantId: true
+      }
+    });
+    return itemsList;
+  }
 }

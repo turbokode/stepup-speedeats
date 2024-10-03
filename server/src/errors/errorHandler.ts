@@ -8,7 +8,8 @@ export const errorHandler: FastifyInstance['errorHandler'] = (error, request, re
   if (error instanceof ZodError) {
     return reply.status(400).send({
       message: 'Validation error',
-      errors: error.flatten().fieldErrors
+      errors: error.flatten().fieldErrors,
+      error: APP_ENV === 'dev' ? error : undefined
     });
   }
   if (APP_ENV === 'dev') return reply.status(500).send(error);
