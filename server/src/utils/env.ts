@@ -12,3 +12,5 @@ export const PROJECT_ID = z.string().parse(process.env.PROJECT_ID);
 export const STORAGE_BUCKET = z.string().parse(process.env.STORAGE_BUCKET);
 export const MESSAGING_SENDER_ID = z.string().parse(process.env.MESSAGING_SENDER_ID);
 export const APP_ID = z.string().parse(process.env.APP_ID);
+
+export const GRAPH_HOPPER_API_KEY = z.string().parse(process.env.GRAPH_HOPPER_API_KEY);

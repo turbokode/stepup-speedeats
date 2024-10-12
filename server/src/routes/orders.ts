@@ -7,7 +7,9 @@ const controller = new OrderController();
 export async function orderRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authHook);
   fastify.post('/', (request, reply) => controller.create(request, reply));
-  // fastify.register(authRoutes);
+  fastify.patch('/:id/delivered', (request, reply) => controller.setOrderAsDelivered(request, reply));
+  fastify.delete('/:id', (request, reply) => controller.cancelOrder(request, reply));
+  fastify.get('/restaurants', (request, reply) => controller.listRestaurantOrders(request, reply));
+  fastify.get('/customers', (request, reply) => controller.listCustomerOrders(request, reply));
+  fastify.get('/:id', (request, reply) => controller.show(request, reply));
 }
-
-async function authRoutes(fastify: FastifyInstance) {}

@@ -99,7 +99,15 @@ export class MenuItemRepository {
       select: {
         id: true,
         price: true,
-        restaurantId: true
+        restaurantId: true,
+        prepareTime: true,
+        restaurant: {
+          select: {
+            id: true,
+            latitude: true,
+            longitude: true
+          }
+        }
       }
     });
     return itemsList;

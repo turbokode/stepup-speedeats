@@ -48,6 +48,15 @@ export class UserRepository {
     return user;
   }
 
+  async findById(id: string) {
+    const user = await this.client.findUnique({
+      where: {
+        id
+      }
+    });
+    return user;
+  }
+
   async update(id: string, { email, address, latitude, longitude, name, phone, password, avatarId }: UpdateUserProps) {
     const passwordHash = password ? await bcrypt.hash(password, 10) : undefined;
     const updateUser = await this.client.update({
