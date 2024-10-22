@@ -9,6 +9,8 @@ import { getMaxNumber } from '../utils/utils';
 import { convertSecondsToTime, convertTimeToSeconds } from '../utils/time';
 import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
+import { receivePayment, sendPayment } from '../utils/mpesa';
+import { PaymentRepository, PaymentStatus, PaymentTypes } from '../repositories/paymentRepository';
 
 dayjs.extend(duration);
 
@@ -21,6 +23,7 @@ export class OrderController {
   #repository = new OrderRepository();
   #menuItemRepository = new MenuItemRepository();
   #userRepository = new UserRepository();
+  #paymentRepository = new PaymentRepository();
 
   async create(request: FastifyRequest, reply: FastifyReply) {
     const bodySchema = z.object({
@@ -95,12 +98,37 @@ export class OrderController {
     const { id } = paramsSchema.parse(request.params);
 
     const order = await this.#repository.findById(id);
+    console.log(order);
 
     if (!order) throw new AppError('Order not found', 404);
 
     if (order.customerId !== userId) throw new AppError('The user has no permission to update order', 403);
 
     if (order.deliveredAt || order.canceledAt) throw new AppError('Order status has already been updated', 403);
+    if (!order.paymentId) throw new AppError('Order has not been paid', 403);
+
+    order.orderItems.forEach(async (item) => {
+      const mpesa = item.restaurant.mpesa;
+      const amount = item.quantity * item.menuItem.price;
+      const transfer = await sendPayment(mpesa, amount);
+
+      const savedTransfer = await this.#paymentRepository.save({
+        amount,
+        code: transfer.code,
+        description: transfer.description,
+        mpesa,
+        reference: transfer.reference,
+        status: PaymentStatus.SUCCESS,
+        restaurantId: item.restaurantId,
+        type: PaymentTypes.OUTCOME
+      });
+
+      await this.#repository.updateOrderItemPayment({
+        menuItemId: item.menuItemId,
+        orderId: item.orderId,
+        transferId: savedTransfer.id
+      });
+    });
 
     const updatedOrder = await this.#repository.update(id, { deliveredAt: new Date() });
 
@@ -167,5 +195,43 @@ export class OrderController {
       throw new AppError('The user has no permission to view order', 403);
 
     return reply.send(order);
+  }
+
+  async makePayment(request: FastifyRequest, reply: FastifyReply) {
+    const bodySchema = z.object({
+      mpesa: z.string()
+    });
+    const paramsSchema = z.object({
+      id: z.string()
+    });
+
+    const { mpesa } = bodySchema.parse(request.body);
+    const { id } = paramsSchema.parse(request.params);
+    const { userId } = request;
+
+    const order = await this.#repository.findById(id);
+
+    if (!order) throw new AppError('Order not found', 404);
+
+    if (order.customerId !== userId) throw new AppError('The user has no permission to view order', 403);
+    if (order.paymentId) throw new AppError('This order has already been paid');
+
+    const payment = await receivePayment(mpesa, order.totalPrice);
+
+    if (!payment.success) throw new AppError(payment.description, payment.status);
+
+    const savedPayment = await this.#paymentRepository.save({
+      amount: order.totalPrice,
+      code: payment.code,
+      description: payment.description,
+      mpesa,
+      reference: payment.reference,
+      status: PaymentStatus.SUCCESS,
+      customerId: userId
+    });
+
+    await this.#repository.update(id, { paymentId: savedPayment.id });
+
+    return reply.send(savedPayment);
   }
 }

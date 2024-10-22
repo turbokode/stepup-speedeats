@@ -7,3 +7,9 @@ export function getMaxNumber(numbers: number[]) {
   });
   return maxNumber;
 }
+
+export function generateRandomNumber(digits: number = 1) {
+  const aux = Math.pow(10, digits - 1);
+  const num = Math.floor(Math.random() * (aux * 9) + aux);
+  return num;
+}

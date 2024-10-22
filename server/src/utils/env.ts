@@ -14,3 +14,7 @@ export const MESSAGING_SENDER_ID = z.string().parse(process.env.MESSAGING_SENDER
 export const APP_ID = z.string().parse(process.env.APP_ID);
 
 export const GRAPH_HOPPER_API_KEY = z.string().parse(process.env.GRAPH_HOPPER_API_KEY);
+
+export const MPESA_API_KEY = z.string().parse(process.env.MPESA_API_KEY);
+export const MPESA_PUBLIC_KEY = z.string().parse(process.env.MPESA_PUBLIC_KEY);
+export const MPESA_SERVICE_PROVIDER_CODE = z.string().parse(process.env.MPESA_SERVICE_PROVIDER_CODE);

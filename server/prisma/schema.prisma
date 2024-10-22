@@ -29,6 +29,7 @@ model User {
   avatar     File?        @relation(fields: [avatarId], references: [id])
   restaurant Restaurant[]
   orders     Order[]
+  Payment    Payment[]
 
   @@map("users")
 }
@@ -67,6 +68,7 @@ model Restaurant {
   email       String  @unique
   createdBy   String  @map("created_by")
   imageId     String? @map("image_id")
+  mpesa       String  @default("846476284")
 
   createdAt DateTime @default(now()) @map("created_at")
   updateAt  DateTime @updatedAt @map("updated_at")
@@ -75,6 +77,7 @@ model Restaurant {
   image      File?       @relation(fields: [imageId], references: [id])
   menuItems  MenuItem[]
   orderItems OrderItem[]
+  Payment    Payment[]
 
   @@map("restaurants")
 }
@@ -130,23 +133,60 @@ model Order {
   createdAt  DateTime  @default(now()) @map("created_at")
   updateAt   DateTime  @updatedAt @map("updated_at")
 
-  customerId String @map("customer_id")
+  customerId String  @map("customer_id")
+  paymentId  String? @map("payment_id")
 
   customer   User        @relation(fields: [customerId], references: [id])
+  payment    Payment?    @relation(fields: [paymentId], references: [id])
   orderItems OrderItem[]
 
   @@map("orders")
 }
 
 model OrderItem {
-  orderId      String @map("order_id")
-  menuItemId   String @map("menu_item_id")
-  restaurantId String @map("restaurant_id")
+  orderId      String  @map("order_id")
+  menuItemId   String  @map("menu_item_id")
+  restaurantId String  @map("restaurant_id")
   quantity     Int
+  transferId   String? @map("payment_id")
 
   order      Order      @relation(fields: [orderId], references: [id])
   menuItem   MenuItem   @relation(fields: [menuItemId], references: [id])
   restaurant Restaurant @relation(fields: [restaurantId], references: [id])
+  transfer   Payment?   @relation(fields: [transferId], references: [id])
 
   @@id([orderId, menuItemId])
+}
+
+enum PaymentStatus {
+  FAILED
+  PENDING
+  SUCCESS
+}
+
+enum PaymentType {
+  INCOME
+  OUTCOME
+}
+
+model Payment {
+  id           String        @id @default(uuid())
+  amount       Float
+  status       PaymentStatus @default(PENDING)
+  type         PaymentType   @default(INCOME)
+  code         String
+  description  String
+  reference    String        @unique
+  mpesa        String
+  restaurantId String?       @map("restaurant_id")
+  customerId   String?       @map("customer_id")
+
+  createdAt  DateTime    @default(now()) @map("created_at")
+  updateAt   DateTime    @updatedAt @map("updated_at")
+  Order      Order[]
+  restaurant Restaurant? @relation(fields: [restaurantId], references: [id])
+  customer   User?       @relation(fields: [customerId], references: [id])
+  OrderItem  OrderItem[]
+
+  @@map("payments")
 }

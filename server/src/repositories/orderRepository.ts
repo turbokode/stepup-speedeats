@@ -16,6 +16,7 @@ interface SaveOrderProps {
 interface UpdateOrderProps {
   deliveredAt?: Date;
   canceledAt?: Date;
+  paymentId?: string;
 }
 
 interface ListOrdersProps {
@@ -25,6 +26,7 @@ interface ListOrdersProps {
 
 export class OrderRepository {
   #client = prisma.order;
+  #orderItemClient = prisma.orderItem;
   async save(data: SaveOrderProps) {
     const { customerId, totalPrice, items, deliveryTime } = data;
 
@@ -49,7 +51,6 @@ export class OrderRepository {
 
   async findById(id: string, options?: { restaurantId?: string }) {
     const restaurantId = options?.restaurantId;
-    console.log(restaurantId);
 
     const order = await this.#client.findFirst({
       where: {
@@ -66,7 +67,8 @@ export class OrderRepository {
             restaurantId
           },
           include: {
-            menuItem: true
+            menuItem: true,
+            restaurant: true
           }
         }
       }
@@ -75,14 +77,15 @@ export class OrderRepository {
   }
 
   async update(id: string, data: UpdateOrderProps) {
-    const { deliveredAt, canceledAt } = data;
+    const { deliveredAt, canceledAt, paymentId } = data;
     const updatedOrder = await this.#client.update({
       where: {
         id
       },
       data: {
         deliveredAt,
-        canceledAt
+        canceledAt,
+        paymentId
       }
     });
 
@@ -113,5 +116,22 @@ export class OrderRepository {
       }
     });
     return orders;
+  }
+
+  async updateOrderItemPayment(data: { menuItemId: string; orderId: string; transferId: string }) {
+    const { menuItemId, orderId, transferId } = data;
+    const updatedItem = await this.#orderItemClient.update({
+      where: {
+        orderId_menuItemId: {
+          menuItemId,
+          orderId
+        }
+      },
+      data: {
+        transferId
+      }
+    });
+
+    return updatedItem;
   }
 }
