@@ -16,6 +16,7 @@ export async function menuItemRoutes(fastify: FastifyInstance) {
 async function authRoutes(fastify: FastifyInstance) {
   fastify.addHook('preHandler', authHook);
   fastify.post('/', { preHandler: uploadHook('image') }, (request, reply) => controller.create(request, reply));
+  fastify.put('/:id', { preHandler: uploadHook('image') }, (request, reply) => controller.update(request, reply));
   // fastify.post('/', { preHandler: uploadHook('image') }, (request, reply) =>
   //   restaurantsController.create(request, reply)
   // );

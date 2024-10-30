@@ -1,0 +1,19 @@
+
+<p>Acabamos de registar o pagamento da sua encomenda uma encomenda no seu nome. Encontre abaixo os detalhes da encomenda</p>
+<table>
+  <tr>
+    <td>Item</td>
+    <td>Quantidade</td>
+    <td>Preço unitário</td>
+  </tr>
+  {{#each items}}
+    <tr>
+      <td>{{menuItem.name}}</td>
+      <td>{{quantity}}</td>
+      <td>{{menuItem.price}}</td>
+    </tr>
+  {{/each}}
+</table>
+
+<p><strong>Referencia do pagamento:</strong> {{reference}}</p>
+<p><strong>Preço total: </strong> {{price}}</p>

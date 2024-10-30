@@ -11,12 +11,24 @@ interface SaveMenuItemProps {
   ingredients: string[];
 }
 
+interface UpdateMenuItemProps {
+  name?: string;
+  description?: string;
+  price?: number;
+  prepareTime?: string;
+  imageId?: string;
+  newIngredients?: string[];
+  ingredients?: string[];
+  removedIngredients?: string[];
+}
+
 interface ListMenuItemsProps {
   name?: string;
   page?: number;
 }
 export class MenuItemRepository {
   #client = prisma.menuItem;
+  #menuItemIngredientsClient = prisma.menuItemIngredient;
   async save(data: SaveMenuItemProps) {
     const { name, description, price, prepareTime, imageId, restaurantId, newIngredients, ingredients } = data;
     const savedMenuItem = await this.#client.create({
@@ -51,6 +63,66 @@ export class MenuItemRepository {
         }
       }
     });
+    return savedMenuItem;
+  }
+
+  async update(id: string, data: UpdateMenuItemProps) {
+    const {
+      name,
+      description,
+      price,
+      prepareTime,
+      imageId,
+      newIngredients = [],
+      ingredients = [],
+      removedIngredients = []
+    } = data;
+    const savedMenuItem = await this.#client.update({
+      where: {
+        id
+      },
+      data: {
+        name,
+        description,
+        price,
+        prepareTime,
+        imageId,
+        ingredients: {
+          create: [
+            ...ingredients.map((id) => {
+              return {
+                ingredient: {
+                  connect: {
+                    id
+                  }
+                }
+              };
+            }),
+            ...newIngredients.map((name) => {
+              return {
+                ingredient: {
+                  create: {
+                    name
+                  }
+                }
+              };
+            })
+          ]
+        }
+      }
+    });
+
+    removedIngredients.forEach(async (ingredient) => {
+      await this.#menuItemIngredientsClient.delete({
+        where: {
+          ingredientId_menuItemId: {
+            menuItemId: id,
+            ingredientId: ingredient
+          }
+        }
+      });
+    });
+
     return savedMenuItem;
   }
 
@@ -101,6 +173,7 @@ export class MenuItemRepository {
         price: true,
         restaurantId: true,
         prepareTime: true,
+        name: true,
         restaurant: {
           select: {
             id: true,

@@ -11,6 +11,10 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import { receivePayment, sendPayment } from '../utils/mpesa';
 import { PaymentRepository, PaymentStatus, PaymentTypes } from '../repositories/paymentRepository';
+import { sendMail } from '../services/mail';
+import Queue from '../lib/Queue';
+import CreateOrderMail from '../jobs/CreateOrderMail';
+import PayOrderMail from '../jobs/PayOrderMail';
 
 dayjs.extend(duration);
 
@@ -86,6 +90,13 @@ export class OrderController {
     const deliveryTime = convertSecondsToTime(totalDeliveryTimeInSeconds);
 
     const savedOrder = await this.#repository.save({ customerId, totalPrice, items: parsedMenuItems, deliveryTime });
+
+    Queue.add(CreateOrderMail.key, {
+      email: user.email,
+      name: user.name,
+      price: savedOrder.totalPrice,
+      items: parsedMenuItems
+    });
 
     return reply.send(savedOrder);
   }
@@ -209,6 +220,8 @@ export class OrderController {
     const { id } = paramsSchema.parse(request.params);
     const { userId } = request;
 
+    const user = await this.#userRepository.findById(userId);
+
     const order = await this.#repository.findById(id);
 
     if (!order) throw new AppError('Order not found', 404);
@@ -231,6 +244,14 @@ export class OrderController {
     });
 
     await this.#repository.update(id, { paymentId: savedPayment.id });
+
+    Queue.add(PayOrderMail.key, {
+      name: user?.name,
+      email: user?.email,
+      reference: savedPayment.reference,
+      price: order.totalPrice,
+      items: order.orderItems
+    });
 
     return reply.send(savedPayment);
   }

@@ -23,9 +23,11 @@ export class MenuItemsController {
         originalname: z.string()
       }),
       newIngredients: z.string().array(),
-      ingredients: z.string().array(),
+      ingredients: z.string().array()
     });
-    const { name, price, description, image, prepareTime, newIngredients, ingredients } = menuItemSchema.parse(request.body);
+    const { name, price, description, image, prepareTime, newIngredients, ingredients } = menuItemSchema.parse(
+      request.body
+    );
     const { restaurantId } = request;
     const savedFile = await this.fileRepository.save(image);
 
@@ -41,6 +43,51 @@ export class MenuItemsController {
     });
 
     return reply.status(201).send(savedMenuItem);
+  }
+
+  async update(request: FastifyRequest, reply: FastifyReply) {
+    const menuItemSchema = z.object({
+      name: z.string().optional(),
+      description: z.string().optional(),
+      price: z.coerce.number().optional(),
+      prepareTime: z.string().optional(),
+      image: z
+        .object({
+          filename: z.string(),
+          originalname: z.string()
+        })
+        .optional(),
+      newIngredients: z.string().array().optional(),
+      ingredients: z.string().array().optional(),
+      removedIngredients: z.string().array().optional()
+    });
+    const ParamsSchema = z.object({
+      id: z.string()
+    });
+
+    const { id } = ParamsSchema.parse(request.params);
+    const { name, price, description, image, prepareTime, newIngredients, ingredients, removedIngredients } =
+      menuItemSchema.parse(request.body);
+
+    const menuItem = await this.#repository.findById(id);
+
+    if (!menuItem) throw new AppError('Menu item not found', 404);
+
+    let savedFile;
+    if (image) savedFile = await this.fileRepository.save(image);
+
+    const updatedMenuItem = await this.#repository.update(id, {
+      name,
+      price,
+      description,
+      prepareTime,
+      imageId: savedFile ? savedFile.id : undefined,
+      newIngredients,
+      ingredients,
+      removedIngredients
+    });
+
+    return reply.status(201).send(updatedMenuItem);
   }
 
   async list(request: FastifyRequest, reply: FastifyReply) {

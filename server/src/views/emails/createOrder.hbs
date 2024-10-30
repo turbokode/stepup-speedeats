@@ -1,0 +1,21 @@
+<p>Ola, <strong>{{name}}</strong></p>
+<p>Acabamos de registar uma encomenda no seu nome. Encontre abaixo os detalhes da encomenda</p>
+<table>
+  <tr>
+    <td>Item</td>
+    <td>Quantidade</td>
+    <td>Preço unitário</td>
+  </tr>
+  {{#each items}}
+    <tr>
+      <td>{{name}}</td>
+      <td>{{quantity}}</td>
+      <td>{{price}}</td>
+    </tr>
+  {{/each}}
+</table>
+
+<br />
+<br />
+<strong>Preço total: </strong>
+{{price}}

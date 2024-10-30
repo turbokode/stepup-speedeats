@@ -18,3 +18,8 @@ export const GRAPH_HOPPER_API_KEY = z.string().parse(process.env.GRAPH_HOPPER_AP
 export const MPESA_API_KEY = z.string().parse(process.env.MPESA_API_KEY);
 export const MPESA_PUBLIC_KEY = z.string().parse(process.env.MPESA_PUBLIC_KEY);
 export const MPESA_SERVICE_PROVIDER_CODE = z.string().parse(process.env.MPESA_SERVICE_PROVIDER_CODE);
+
+export const MAIL_HOST = z.string().parse(process.env.MAIL_HOST);
+export const MAIL_PORT = z.coerce.number().parse(process.env.MAIL_PORT);
+export const MAIL_USER = z.string().parse(process.env.MAIL_USER);
+export const MAIL_PASS = z.string().parse(process.env.MAIL_PASS);
